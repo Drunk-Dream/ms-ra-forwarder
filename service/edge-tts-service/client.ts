@@ -1,11 +1,11 @@
 import { arrayBufferToString, concatArrayBuffers } from '../utils'
 import axios from 'axios'
-import { createHash } from 'node:crypto'
 import { WebSocket } from 'ws'
+import { generateSecMsGecV2 } from './sec-ms-gec'
 
-export const CHROMIUM_FULL_VERSION = '144.0.3719.82'
+export const CHROMIUM_FULL_VERSION = '155.0.4283.45'
 export const TRUSTED_CLIENT_TOKEN = '6A5AA1D4EAFF4E9FB37E23D68491D6F4'
-const WINDOWS_FILE_TIME_EPOCH = 11644473600n
+const CHROMIUM_MAJOR_VERSION = CHROMIUM_FULL_VERSION.split('.')[0]
 
 class MessageHeader {
     requestId: string
@@ -84,18 +84,6 @@ export class EdgeTTSClient {
         return data
     }
 
-    private static generateSecMsGecToken() {
-        const ticks = BigInt(Math.floor((Date.now() / 1000) + Number(WINDOWS_FILE_TIME_EPOCH))) * 10000000n
-        const roundedTicks = ticks - (ticks % 3000000000n)
-
-        const strToHash = `${roundedTicks}${TRUSTED_CLIENT_TOKEN}`
-
-        const hash = createHash('sha256')
-        hash.update(strToHash, 'ascii')
-
-        return hash.digest('hex').toUpperCase()
-    }
-
     private static generateId(): String {
         const charset = "abcdef0123456789";
         let randomString = "";
@@ -107,19 +95,19 @@ export class EdgeTTSClient {
     }
     private static async createWS(): Promise<WebSocket> {
         const connectionId = this.generateId()
-        const secMsGec = this.generateSecMsGecToken()
+        const secMsGec = generateSecMsGecV2(TRUSTED_CLIENT_TOKEN)
         const url = new URL('wss://api.msedgeservices.com/tts/cognitiveservices/websocket/v1')
         url.search = new URLSearchParams({
             'Ocp-Apim-Subscription-Key': TRUSTED_CLIENT_TOKEN,
             'Sec-MS-GEC': secMsGec,
-            'Sec-MS-GEC-Version': `1-${CHROMIUM_FULL_VERSION}`,
+            'Sec-MS-GEC-Version': `2-${CHROMIUM_FULL_VERSION}`,
             ConnectionId: String(connectionId),
         }).toString()
         const client = new WebSocket(url, {
             origin: 'chrome-extension://jdiccldimpdaibmpdkjnbmckianbfold',
             headers: {
                 'User-Agent':
-                    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36 Edg/144.0.0.0',
+                    `Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${CHROMIUM_MAJOR_VERSION}.0.0.0 Safari/537.36 Edg/${CHROMIUM_MAJOR_VERSION}.0.0.0`,
             },
         })
         return new Promise((resolve, reject) => {
