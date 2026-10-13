@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   publish:
-    if: github.repository == 'Drunk-Dream/ms-ra-forwarder' && github.ref == 'refs/heads/fix/edge-tts-2026-10'
+    if: github.repository == 'Drunk-Dream/ms-ra-forwarder' && github.ref == 'refs/heads/fix/drudream'
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
@@ -34,5 +34,5 @@ jobs:
         context: .
         push: true
         platforms: linux/amd64,linux/arm64
-        tags: ghcr.io/drunk-dream/ms-ra-forwarder:edge-tts-${{ github.sha }}
+        tags: ghcr.io/drunk-dream/ms-ra-forwarder:drudream
         labels: org.opencontainers.image.source=https://github.com/Drunk-Dream/ms-ra-forwarder
