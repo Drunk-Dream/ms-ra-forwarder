@@ -108,9 +108,14 @@ export class EdgeTTSClient {
     private static async createWS(): Promise<WebSocket> {
         const connectionId = this.generateId()
         const secMsGec = this.generateSecMsGecToken()
-        let url = `wss://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1?TrustedClientToken=${TRUSTED_CLIENT_TOKEN}&Sec-MS-GEC=${secMsGec}&Sec-MS-GEC-Version=1-${CHROMIUM_FULL_VERSION}&ConnectionId=${connectionId}`
+        const url = new URL('wss://api.msedgeservices.com/tts/cognitiveservices/websocket/v1')
+        url.search = new URLSearchParams({
+            'Ocp-Apim-Subscription-Key': TRUSTED_CLIENT_TOKEN,
+            'Sec-MS-GEC': secMsGec,
+            'Sec-MS-GEC-Version': `1-${CHROMIUM_FULL_VERSION}`,
+            ConnectionId: String(connectionId),
+        }).toString()
         const client = new WebSocket(url, {
-            host: 'speech.platform.bing.com',
             origin: 'chrome-extension://jdiccldimpdaibmpdkjnbmckianbfold',
             headers: {
                 'User-Agent':

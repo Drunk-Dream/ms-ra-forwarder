@@ -1,43 +1,38 @@
-name: Docker Image
+name: Publish Edge TTS Docker Image
 
 on:
   workflow_dispatch:
-  push:
-    branches: [ master ]
 
-env: 
-  DOCKER_REPOSITORY: wxxxcxx/ms-ra-forwarder
+permissions:
+  contents: read
+  packages: write
 
 jobs:
-  build:
+  publish:
+    if: github.repository == 'Drunk-Dream/ms-ra-forwarder' && github.ref == 'refs/heads/fix/edge-tts-2026-10'
     runs-on: ubuntu-latest
-    if: github.repository == 'wxxxcxx/ms-ra-forwarder'
     steps:
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
     
     - name: Docker setup QEMU
-      uses: docker/setup-qemu-action@v1.2.0
+      uses: docker/setup-qemu-action@v3
       
     - name: Docker setup Buildx
-      uses: docker/setup-buildx-action@v1.6.0
+      uses: docker/setup-buildx-action@v3
       
     - name: Docker login
-      uses: docker/login-action@v1.13.0
+      uses: docker/login-action@v3
       with:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
-        
-    - name: Create docker image tag
-      run: echo DATE_TAG=$(date +%y%m%d%H%M%S) >> $GITHUB_ENV
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
       
     - name: Build and push docker image
-      uses: docker/build-push-action@v2.9.0
+      uses: docker/build-push-action@v6
       with:
+        context: .
         push: true
-        platforms: |
-          linux/amd64
-          linux/arm64/v8
-        tags: |
-          ${{ env.DOCKER_REPOSITORY }}:${{ env.DATE_TAG }}
-          ${{ env.DOCKER_REPOSITORY }}:latest
+        platforms: linux/amd64,linux/arm64
+        tags: ghcr.io/drunk-dream/ms-ra-forwarder:edge-tts-${{ github.sha }}
+        labels: org.opencontainers.image.source=https://github.com/Drunk-Dream/ms-ra-forwarder
